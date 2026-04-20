@@ -38,3 +38,68 @@ class RegisterView(CreateView):
             'Registration successful! Please log in with your credentials.'
         )
         return response
+class LoginView(View):
+    """
+    User login view.
+    Supports authentication with username or email.
+    Blocks banned users.
+    """
+    template_name = 'accounts/login.html'
+
+    @method_decorator(ratelimit(key='ip', rate='5/m', method='POST'))
+    def dispatch(self, request, *args, **kwargs):
+        """
+        Rate limit login attempts to 5 per minute.
+        """
+        if request.user.is_authenticated:
+            return redirect('listings:home')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request):
+        """Display login form."""
+        form = LoginForm()
+        return render(request, self.template_name, {'form': form})
+
+    def post(self, request):
+        """Handle login form submission."""
+        form = LoginForm(request.POST)
+
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+
+            # Authenticate using custom backend (supports username or email)
+            user = authenticate(request, username=username, password=password)
+
+            if user is not None:
+                # Check if user is banned
+                if user.is_banned:
+                    messages.error(
+                        request,
+                        'Your account has been banned. Please contact support.'
+                    )
+                    return render(request, self.template_name, {'form': form})
+
+                # Check if user is active
+                if not user.is_active:
+                    messages.error(
+                        request,
+                        'Your account is inactive. Please contact support.'
+                    )
+                    return render(request, self.template_name, {'form': form})
+
+                # Login successful
+                login(request, user)
+                messages.success(request, f'Welcome back, {user.get_full_name()}!')
+
+                # Redirect to next URL or default to home
+                next_url = request.GET.get('next', 'listings:home')
+                return redirect(next_url)
+            else:
+                # Invalid credentials
+                messages.error(
+                    request,
+                    'Invalid username/email or password. Please try again.'
+                )
+
+        return render(request, self.template_name, {'form': form})
