@@ -103,3 +103,15 @@ class LoginView(View):
                 )
 
         return render(request, self.template_name, {'form': form})
+class LogoutView(View):
+    """
+    User logout view.
+    Must be accessed via POST to prevent accidental logout via links.
+    """
+
+    def post(self, request):
+        """Handle logout."""
+        username = request.user.get_full_name() if request.user.is_authenticated else 'User'
+        logout(request)
+        messages.success(request, f'You have been logged out successfully.')
+        return redirect('listings:home')
