@@ -115,3 +115,22 @@ class LogoutView(View):
         logout(request)
         messages.success(request, f'You have been logged out successfully.')
         return redirect('listings:home')
+class ProfileView(LoginRequiredMixin, UpdateView):
+      """
+    User profile edit view.
+    Allows users to update their profile information.
+    """
+      model = User
+      form_class = ProfileForm
+      template_name = 'accounts/profile.html'
+      success_url = reverse_lazy('accounts:profile')
+  
+      def get_object(self, queryset=None):
+        """Return the current user."""
+        return self.request.user
+
+      def form_valid(self, form):
+        """Handle form submission."""
+        response = super().form_valid(form)
+        messages.success(self.request, 'Profile updated successfully!')
+        return response
