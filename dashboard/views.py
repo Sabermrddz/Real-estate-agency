@@ -154,3 +154,193 @@ class MyListingsView(LoginRequiredMixin, ListView):
         context['current_status'] = self.request.GET.get('status', '')
 
         return context
+
+
+class MyInboxView(LoginRequiredMixin, TemplateView):
+    """
+    Show user's messages and inquiries inbox.
+    - Displays inquiries SENT by user (as buyer)
+    - Displays inquiries RECEIVED by user (as property owner)
+    """
+    template_name = 'dashboard/my_inbox.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        # Add counters using helper function
+        context.update(get_dashboard_context(user))
+        
+        # Get inquiries RECEIVED (user is property owner)
+        received_inquiries = Inquiry.objects.filter(to_user=user).order_by('-created_at').prefetch_related('messages')
+        
+        # Get inquiries SENT (user is the buyer)
+        sent_inquiries = Inquiry.objects.filter(from_user=user).order_by('-created_at').prefetch_related('messages')
+        
+        # Mark as read when user views inbox (only receiver flag exists now)
+        Inquiry.objects.filter(to_user=user, to_user_read=False).update(to_user_read=True)
+        
+        # Mark all unread messages as read (messages sent TO the user from the other person)
+        all_inquiries_for_user = Inquiry.objects.filter(Q(to_user=user) | Q(from_user=user))
+        InquiryMessage.objects.filter(
+            inquiry__in=all_inquiries_for_user,
+            is_read=False
+        ).exclude(sender=user).update(is_read=True)
+        
+        # Combine both and sort by latest activity
+        all_inquiries = list(received_inquiries) + list(sent_inquiries)
+        all_inquiries.sort(key=lambda x: x.updated_at, reverse=True)
+        
+        # Pagination
+        paginator = Paginator(all_inquiries, 20)
+        page_number = self.request.GET.get('page')
+        context['inquiries'] = paginator.get_page(page_number)
+        context['total_inquiries'] = len(all_inquiries)
+        context['unread_inquiries'] = 0  # Always 0 since we just marked all as read
+        
+        # Tab indicator
+        context['active_tab'] = 'inbox'
+        
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        """Handle sending a reply message."""
+        user = request.user
+        inquiry_id = request.POST.get('inquiry_id')
+        message_text = request.POST.get('message', '').strip()
+        
+        if not inquiry_id or not message_text:
+            messages.error(request, 'Invalid message.')
+            return redirect('dashboard:inbox')
+        
+        try:
+            inquiry = Inquiry.objects.get(id=inquiry_id)
+            
+            # Check if user is part of this inquiry (either sender or receiver)
+            if inquiry.from_user != user and inquiry.to_user != user:
+                messages.error(request, 'You are not part of this conversation.')
+                return redirect('dashboard:inbox')
+            
+            # Create the message
+            InquiryMessage.objects.create(
+                inquiry=inquiry,
+                sender=user,
+                message=message_text,
+                is_read=False  # Receiver hasn't read it yet
+            )
+            
+            # Mark as unread for the receiver (property owner) when sender replies
+            if inquiry.to_user != user:
+                inquiry.to_user_read = False
+            inquiry.updated_at = timezone.now()
+            inquiry.save()
+            
+            messages.success(request, 'Message sent!')
+        except Inquiry.DoesNotExist:
+            messages.error(request, 'Inquiry not found.')
+        except Exception as e:
+            messages.error(request, f'Error sending message: {str(e)}')
+        
+        return redirect('dashboard:inbox')
+
+
+@login_required
+@require_POST
+def delete_inquiry(request, inquiry_id):
+    """Delete an inquiry conversation (removes from both users' inboxes)."""
+    user = request.user
+    
+    try:
+        inquiry = Inquiry.objects.get(id=inquiry_id)
+        
+        # Check if user is part of this inquiry (either sender or receiver)
+        if inquiry.from_user != user and inquiry.to_user != user:
+            messages.error(request, 'You are not part of this conversation.')
+            return redirect('dashboard:inbox')
+        
+        # Delete the inquiry (and all its messages via cascade)
+        inquiry.delete()
+        messages.success(request, 'Conversation deleted successfully!')
+    except Inquiry.DoesNotExist:
+        messages.error(request, 'Conversation not found.')
+    except Exception as e:
+        messages.error(request, f'Error deleting conversation: {str(e)}')
+    
+    return redirect('dashboard:inbox')
+
+
+class MyReservationsView(LoginRequiredMixin, TemplateView):
+    """
+    Show user's reservations (both made and received).
+    """
+    template_name = 'dashboard/my_reservations.html'
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        
+        # Add counters using helper function
+        context.update(get_dashboard_context(user))
+        
+        # Received reservations (for user's properties)
+        received_qs = Reservation.objects.filter(
+            to_user=user
+        ).exclude(status='rejected').select_related('house', 'from_user').order_by('-created_at')
+
+        # Optional status filter (?status=pending|confirmed)
+        status_filter = self.request.GET.get('status')
+        if status_filter in ['pending', 'confirmed']:
+            received_reservations = received_qs.filter(status=status_filter)
+        else:
+            received_reservations = received_qs
+        
+        # Made reservations (by user)
+        made_qs = Reservation.objects.filter(
+            from_user=user
+        ).exclude(deleted_for_guest_at__isnull=False).select_related('house', 'to_user').order_by('-created_at')
+        
+        # Optional status filter for made (?status_made=pending|confirmed|rejected)
+        status_filter_made = self.request.GET.get('status_made')
+        if status_filter_made in ['pending', 'confirmed', 'rejected']:
+            made_reservations = made_qs.filter(status=status_filter_made)
+        else:
+            made_reservations = made_qs
+        
+        # Pagination for received
+        paginator = Paginator(received_reservations, 15)
+        page_number = self.request.GET.get('page')
+        context['received_reservations'] = paginator.get_page(page_number)
+        context['total_received'] = received_qs.count()
+        
+        # Pagination for made
+        paginator_made = Paginator(made_reservations, 15)
+        page_number_made = self.request.GET.get('page_made')
+        context['made_reservations'] = paginator_made.get_page(page_number_made)
+        context['total_made'] = made_qs.count()
+        
+        # Status counts for received
+        context['pending_count'] = received_qs.filter(status='pending').count()
+        context['confirmed_count'] = received_qs.filter(status='confirmed').count()
+        
+        # Status counts for made
+        context['made_pending_count'] = made_qs.filter(status='pending').count()
+        context['made_confirmed_count'] = made_qs.filter(status='confirmed').count()
+        context['made_rejected_count'] = made_qs.filter(status='rejected').count()
+
+        # Current filter for button highlighting
+        context['current_status'] = status_filter or ''
+        context['current_status_made'] = status_filter_made or ''
+        
+        # Determine which tab should be active based on query parameters
+        tab_param = self.request.GET.get('tab', '')
+        if tab_param == 'made':
+            context['active_tab'] = 'made'
+        elif status_filter_made or page_number_made:
+            context['active_tab'] = 'made'
+        else:
+            context['active_tab'] = 'received'
+        
+        # Tab indicator
+        context['active_tab_name'] = 'reservations'
+        
+        return context
