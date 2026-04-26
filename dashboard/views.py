@@ -344,3 +344,95 @@ class MyReservationsView(LoginRequiredMixin, TemplateView):
         context['active_tab_name'] = 'reservations'
         
         return context
+
+
+@login_required
+@require_POST
+def reservation_action(request, reservation_id, action):
+    """
+    Update reservation status from the profile area.
+    Allowed actions:
+    - confirm/reject by property owner (to_user)
+    - cancel by guest (from_user) when pending
+    """
+    reservation = get_object_or_404(Reservation, id=reservation_id)
+
+    if action in ['confirm', 'reject']:
+        if reservation.to_user != request.user:
+            messages.error(request, 'You do not have permission to update this reservation.')
+            return redirect('dashboard:reservations')
+        if reservation.status != 'pending':
+            messages.error(request, 'Only pending reservations can be updated.')
+            return redirect('dashboard:reservations')
+        
+        if action == 'confirm':
+            reservation.status = 'confirmed'
+            reservation.save(update_fields=['status', 'status_updated_at'])
+            
+            # Mark property as deal done and change status to reserved
+            reservation.house.deal_done = True
+            reservation.house.deal_confirmed_reservation = reservation
+            reservation.house.status = 'reserved'
+            reservation.house.save(update_fields=['deal_done', 'deal_confirmed_reservation', 'status', 'updated_at'])
+            
+            # Automatically reject all other pending reservations for this property
+            other_pending_reservations = Reservation.objects.filter(
+                house=reservation.house,
+                status='pending'
+            ).exclude(id=reservation.id)
+            
+            if other_pending_reservations.exists():
+                other_pending_reservations.update(status='rejected', status_updated_at=timezone.now())
+            
+            messages.success(request, 'Reservation confirmed. Property status changed to Reserved.')
+        else:
+            reservation.status = 'rejected'
+            reservation.save(update_fields=['status', 'status_updated_at'])
+            messages.success(request, 'Reservation rejected.')
+        
+        return redirect('dashboard:reservations')
+
+    if action == 'cancel':
+        if reservation.from_user != request.user:
+            messages.error(request, 'You do not have permission to cancel this reservation.')
+            return redirect('dashboard:reservations')
+        if reservation.status != 'pending':
+            messages.error(request, 'Only pending reservations can be cancelled.')
+            return redirect('dashboard:reservations')
+        reservation.delete()
+        messages.success(request, 'Reservation cancelled and deleted.')
+        return redirect('dashboard:reservations')
+
+    if action == 'delete':
+        # For rejected reservations by guest, or confirmed by guest
+        if reservation.from_user == request.user:
+            if reservation.status == 'rejected':
+                # Hard delete for rejected
+                reservation.delete()
+                messages.success(request, 'History cleared.')
+            elif reservation.status == 'confirmed':
+                # Soft delete for confirmed (guest can only hide it, owner still sees it)
+                reservation.deleted_for_guest_at = timezone.now()
+                reservation.save(update_fields=['deleted_for_guest_at', 'status_updated_at'])
+                messages.success(request, 'Reservation removed from your dashboard.')
+        else:
+            messages.error(request, 'You do not have permission to delete this reservation.')
+        return redirect('dashboard:reservations')
+    
+    if action == 'delete_property':
+        # For property owner to delete property after deal completion
+        if reservation.to_user != request.user:
+            messages.error(request, 'You do not have permission to delete this property.')
+            return redirect('dashboard:reservations')
+        if reservation.status != 'confirmed':
+            messages.error(request, 'Only confirmed deals can have the property deleted.')
+            return redirect('dashboard:reservations')
+        
+        # Delete the property
+        property_title = reservation.house.title
+        reservation.house.delete()
+        messages.success(request, f'Property "{property_title}" has been deleted. Deal marked as complete.')
+        return redirect('dashboard:reservations')
+
+    raise Http404('Invalid reservation action.')
+
