@@ -1,6 +1,8 @@
 from pathlib import Path
+import os  # For reading environment variables
 from decouple import config
 
+# Import dj-database-url for parsing DATABASE_URL from DigitalOcean
 try:
     import dj_database_url
 except ImportError:
@@ -10,7 +12,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1').split(',')
+
+# ALLOWED_HOSTS: Supports multiple domains
+# - localhost & 127.0.0.1 for local development
+# - *.ondigitalocean.app for DigitalOcean preview URLs
+# - propdz.com & www.propdz.com for production
+ALLOWED_HOSTS = config(
+    'ALLOWED_HOSTS',
+    default='localhost,127.0.0.1,*.ondigitalocean.app,propdz.com,www.propdz.com'
+).split(',')
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -61,17 +71,58 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# Database configuration
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'real_estate_db',
-        'USER': 'postgres',
-        'PASSWORD': 'saber',
-        'HOST': 'localhost',
-        'PORT': '5432',
+# ============================================================================
+# DATABASE CONFIGURATION
+# Flexible configuration that works BOTH locally (SQLite) and production (PostgreSQL)
+# ============================================================================
+
+# Strategy:
+# 1. If DATABASE_URL environment variable exists (DigitalOcean provides this)
+#    → Use PostgreSQL with the connection string from DigitalOcean
+# 2. If DATABASE_URL doesn't exist (local development)
+#    → Fall back to SQLite for easy local testing without external database server
+
+if 'DATABASE_URL' in os.environ:
+    # ========================================================================
+    # PRODUCTION CONFIGURATION (DigitalOcean App Platform)
+    # ========================================================================
+    # DigitalOcean automatically sets DATABASE_URL when you add a PostgreSQL component
+    # It looks like: postgresql://user:password@host:5432/dbname
+    
+    DATABASES = {
+        'default': dj_database_url.config(
+            # Tell dj_database_url to read the DATABASE_URL environment variable
+            # This parses the connection string and converts it to Django format
+            default=os.environ.get('DATABASE_URL'),
+            
+            # conn_max_age=600: Connection pooling
+            # Keeps database connection alive for 600 seconds instead of creating
+            # a new connection per request. This improves performance significantly.
+            conn_max_age=600,
+            
+            # conn_health_checks=True: Verify connection is alive before using it
+            # Prevents "connection closed by server" errors, especially after
+            # database restarts. Important for reliability.
+            conn_health_checks=True,
+        )
     }
-}
+else:
+    # ========================================================================
+    # DEVELOPMENT CONFIGURATION (Local Machine)
+    # ========================================================================
+    # When DATABASE_URL is not set (local development), use SQLite
+    # Benefits:
+    # - No external database server required
+    # - File-based (stored in db.sqlite3 in project root)
+    # - Much faster startup time
+    # - Perfect for testing and local development
+    
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',  # SQLite engine
+            'NAME': BASE_DIR / 'db.sqlite3',  # File location in project root
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {
