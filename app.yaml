@@ -1,0 +1,33 @@
+name: real-estate-app
+services:
+- name: web
+  github:
+    repo: your-username/real_estate_project  # Replace with your GitHub repo
+    branch: main
+  build_command: pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput
+  run_command: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+  envs:
+  - key: DJANGO_SETTINGS_MODULE
+    value: config.prod
+  - key: SECRET_KEY
+    value: ${SECRET_KEY}
+  - key: DEBUG
+    value: "False"
+  - key: ALLOWED_HOSTS
+    value: ${APP_DOMAIN}
+  - key: DATABASE_URL
+    value: ${db.connection_string}
+  - key: EMAIL_HOST_USER
+    value: ${EMAIL_HOST_USER}
+  - key: EMAIL_HOST_PASSWORD
+    value: ${EMAIL_HOST_PASSWORD}
+  - key: DEFAULT_FROM_EMAIL
+    value: ${DEFAULT_FROM_EMAIL}
+  http_port: 8080
+  source_dir: ./
+specs:
+- name: db
+  engine: PG
+  production: true
+  version: "15"
+  size: db-s-1vcpu-1gb
