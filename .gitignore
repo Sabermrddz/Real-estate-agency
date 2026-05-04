@@ -28,8 +28,6 @@ wheels/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
-/static/
-/media/
 /staticfiles/
 /logs/
 
@@ -37,10 +35,6 @@ db.sqlite3-journal
 .env
 .env.local
 .env.*.local
-
-# Media files
-media/*
-!media/.gitkeep
 
 # IDE
 .vscode/
