@@ -19,6 +19,10 @@ urlpatterns = [
 ]
 
 if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
     urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+
+# Serve media files in both development AND production
+# IMPORTANT: This is only temporary for development/small deployments
+# For production at scale, use DigitalOcean Spaces or AWS S3 instead
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
