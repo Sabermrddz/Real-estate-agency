@@ -67,21 +67,21 @@ DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@propdz.com')
 # ============================================================================
 # LOGGING CONFIGURATION
 # ============================================================================
-# In production, log errors to file instead of showing detailed pages
+# In production, use console logging (send to stdout)
+# DigitalOcean filesystem is ephemeral, so file logging won't persist
 
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'handlers': {
-        'file': {
+        'console': {
             'level': 'WARNING',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs/django.log',
+            'class': 'logging.StreamHandler',
         },
     },
     'loggers': {
         'django': {
-            'handlers': ['file'],
+            'handlers': ['console'],
             'level': 'WARNING',
             'propagate': True,
         },
