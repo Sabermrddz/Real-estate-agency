@@ -177,7 +177,8 @@ class PropertyImage(models.Model):
         """Validate image file."""
         if self.image:
             # Check file size (max 10MB)
-            file_size = self.image.size
+            file_obj = getattr(self.image, 'file', None)
+            file_size = file_obj.size if file_obj else self.image.size
             if file_size > 10 * 1024 * 1024:  # 10MB
                 raise ValidationError('Image size must not exceed 10MB.')
 
@@ -185,8 +186,9 @@ class PropertyImage(models.Model):
             try:
                 import magic
                 mime = magic.Magic(mime=True)
-                file_mime = mime.from_buffer(self.image.read())
-                self.image.seek(0)
+                stream = file_obj if file_obj else self.image
+                file_mime = mime.from_buffer(stream.read())
+                stream.seek(0)
 
                 allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
                 if file_mime not in allowed_types:
