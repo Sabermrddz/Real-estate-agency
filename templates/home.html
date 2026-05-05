@@ -24,37 +24,37 @@
 </section>
 
 <div class="q-searchbar">
-  <form method="get" action="{% url 'listings:property_list' %}" id="sb-form" style="display:contents;">
-  <div class="q-searchbar-inner">
-    <div class="q-sb-field" style="flex:2;min-width:180px;">
+  <form method="get" action="{% url 'listings:property_list' %}" id="sb-form">
+  <div class="q-searchbar-inner" style="display:grid;grid-template-columns:auto 1fr 1fr;gap:0;">
+    <div class="q-sb-field" style="grid-column:1 / -1;flex:1;">
       <div class="q-sb-label">Search</div>
       <input type="text" name="q" placeholder="City, keyword…">
     </div>
-    <div class="q-sb-field">
+    <div class="q-sb-field" style="border-right:1px solid var(--gray4);">
       <div class="q-sb-label">Type</div>
       <select name="property_type"><option value="">All Types</option><option value="sale">For Sale</option><option value="rent">For Rent</option><option value="vacation">Vacation</option></select>
     </div>
-    <div class="q-sb-field">
+    <div class="q-sb-field" style="border-right:1px solid var(--gray4);">
       <div class="q-sb-label">Category</div>
       <select name="category"><option value="">All</option><option value="apartment">Apartment</option><option value="villa">Villa</option><option value="land">Land</option><option value="commercial">Commercial</option></select>
     </div>
-    <div class="q-sb-field">
+    <div class="q-sb-field" style="border-right:1px solid var(--gray4);">
       <div class="q-sb-label">Min Price</div>
       <input type="number" name="min_price" placeholder="0 DZD">
     </div>
-    <div class="q-sb-btn"><button type="submit" class="q-btn-dark" style="border-radius:8px;padding:11px 22px;"><i class="fas fa-search"></i> Search</button></div>
+    <div class="q-sb-btn" style="grid-column:auto;"><button type="submit" class="q-btn-dark" style="border-radius:8px;padding:11px 22px;"><i class="fas fa-search"></i> Search</button></div>
   </div>
   </form>
 </div>
 
 <section class="py-5 bg-light">
   <div class="container">
-    <h2 class="text-center mb-5" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;">Browse by Category</h2>
-    <div class="row g-4">
-      <div class="col-md-3"><a href="{% url 'listings:property_list' %}?category=apartment" class="text-decoration-none"><div class="card text-center h-100 property-card"><div class="card-body py-4"><h4 class="mb-3"><i class="fas fa-building text-accent"></i></h4><h5>Apartments</h5><p class="text-muted mb-0">Modern urban living</p></div></div></a></div>
-      <div class="col-md-3"><a href="{% url 'listings:property_list' %}?category=villa" class="text-decoration-none"><div class="card text-center h-100 property-card"><div class="card-body py-4"><h4 class="mb-3"><i class="fas fa-home text-accent"></i></h4><h5>Villas</h5><p class="text-muted mb-0">Luxurious homes</p></div></div></a></div>
-      <div class="col-md-3"><a href="{% url 'listings:property_list' %}?category=land" class="text-decoration-none"><div class="card text-center h-100 property-card"><div class="card-body py-4"><h4 class="mb-3"><i class="fas fa-tree text-accent"></i></h4><h5>Land</h5><p class="text-muted mb-0">Prime locations</p></div></div></a></div>
-      <div class="col-md-3"><a href="{% url 'listings:property_list' %}?category=commercial" class="text-decoration-none"><div class="card text-center h-100 property-card"><div class="card-body py-4"><h4 class="mb-3"><i class="fas fa-store text-accent"></i></h4><h5>Commercial</h5><p class="text-muted mb-0">Business spaces</p></div></div></a></div>
+    <h2 class="text-center mb-5" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:clamp(22px,5vw,36px);">Browse by Category</h2>
+    <div class="row g-3 g-md-4">
+      <div class="col-6 col-md-3"><a href="{% url 'listings:property_list' %}?category=apartment" class="text-decoration-none"><div class="card text-center h-100 property-card"><div class="card-body py-4"><h4 class="mb-3"><i class="fas fa-building text-accent"></i></h4><h5>Apartments</h5><p class="text-muted mb-0">Modern urban living</p></div></div></a></div>
+      <div class="col-6 col-md-3"><a href="{% url 'listings:property_list' %}?category=villa" class="text-decoration-none"><div class="card text-center h-100 property-card"><div class="card-body py-4"><h4 class="mb-3"><i class="fas fa-home text-accent"></i></h4><h5>Villas</h5><p class="text-muted mb-0">Luxurious homes</p></div></div></a></div>
+      <div class="col-6 col-md-3"><a href="{% url 'listings:property_list' %}?category=land" class="text-decoration-none"><div class="card text-center h-100 property-card"><div class="card-body py-4"><h4 class="mb-3"><i class="fas fa-tree text-accent"></i></h4><h5>Land</h5><p class="text-muted mb-0">Prime locations</p></div></div></a></div>
+      <div class="col-6 col-md-3"><a href="{% url 'listings:property_list' %}?category=commercial" class="text-decoration-none"><div class="card text-center h-100 property-card"><div class="card-body py-4"><h4 class="mb-3"><i class="fas fa-store text-accent"></i></h4><h5>Commercial</h5><p class="text-muted mb-0">Business spaces</p></div></div></a></div>
     </div>
   </div>
 </section>
@@ -62,10 +62,10 @@
 {% if featured_properties %}
 <section class="py-5">
   <div class="container">
-    <h2 class="text-center mb-5" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;">Featured Listings</h2>
-    <div class="row g-4">
+    <h2 class="text-center mb-5" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;text-transform:uppercase;letter-spacing:-.01em;font-size:clamp(22px,5vw,36px);">Featured Listings</h2>
+    <div class="row g-3 g-md-4">
       {% for property in featured_properties %}
-      <div class="col-md-6 col-lg-4">
+      <div class="col-12 col-sm-6 col-lg-4">
         <div class="card property-card">
           <div class="position-relative overflow-hidden">
             {% if property.primary_image %}<img src="{{ property.primary_image.image.url }}" alt="{{ property.title }}" class="card-img-top">{% else %}<div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:200px;"><i class="fas fa-image text-muted" style="font-size:3rem;"></i></div>{% endif %}

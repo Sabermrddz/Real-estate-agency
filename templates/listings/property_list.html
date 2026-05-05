@@ -4,29 +4,34 @@
 <div class="q-page-hdr"><div class="container q-page-hdr-inner"><div><div class="q-eyebrow">Properties</div><h1>All Listings</h1></div>{% if user.is_authenticated %}<a href="{% url 'listings:property_new' %}" class="btn btn-primary btn-accent"><i class="fas fa-plus me-2"></i>Post Property</a>{% endif %}</div></div>
 <div class="container-fluid py-4" style="background:var(--gray5);min-height:60vh;">
   <div class="row" style="max-width:1240px;margin:0 auto;">
-    <div class="col-lg-3 mb-4">
-      <div class="card">
-        <div class="card-header bg-primary text-white"><h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Properties</h5></div>
-        <div class="card-body" style="background:var(--gray5);">
-          <form method="get" id="filter-form">
-            <div class="mb-3"><label class="form-label">Search</label><input type="text" name="q" class="form-control" value="{{ filter_form.q.value|default:'' }}" placeholder="Search properties..."></div>
-            <div class="mb-3"><label class="form-label">Property Type</label>{% for value, label in filter_form.property_type.field.choices %}<div class="form-check"><input type="checkbox" class="form-check-input" name="property_type" value="{{ value }}" {% if value in filter_form.property_type.value %}checked{% endif %}><label class="form-check-label">{{ label }}</label></div>{% endfor %}</div>
-            <div class="mb-3"><label class="form-label">Category</label>{% for value, label in filter_form.category.field.choices %}<div class="form-check"><input type="checkbox" class="form-check-input" name="category" value="{{ value }}" {% if value in filter_form.category.value %}checked{% endif %}><label class="form-check-label">{{ label }}</label></div>{% endfor %}</div>
-            <div class="mb-3"><label class="form-label">City</label><input type="text" name="city" class="form-control" value="{{ filter_form.city.value|default:'' }}" placeholder="Enter city..."></div>
-            <div class="mb-3"><label class="form-label">Price Range (DZD)</label><div class="d-flex gap-2"><input type="number" name="min_price" class="form-control" value="{{ filter_form.min_price.value|default:'' }}" placeholder="Min"><input type="number" name="max_price" class="form-control" value="{{ filter_form.max_price.value|default:'' }}" placeholder="Max"></div></div>
-            <div class="mb-3"><label class="form-label">Min Rooms</label><input type="number" name="min_rooms" class="form-control" value="{{ filter_form.min_rooms.value|default:'' }}" placeholder="Number of rooms"></div>
-            <div class="mb-3"><div class="form-check"><input type="checkbox" class="form-check-input" name="furnished" value="true" id="furnished" {% if request.GET.furnished == 'true' %}checked{% endif %}><label class="form-check-label" for="furnished">Furnished</label></div><div class="form-check"><input type="checkbox" class="form-check-input" name="parking" value="true" id="parking" {% if request.GET.parking == 'true' %}checked{% endif %}><label class="form-check-label" for="parking">Parking</label></div></div>
-            <div class="mb-3"><label class="form-label">Sort By</label><select name="sort" class="form-select"><option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest First</option><option value="price" {% if request.GET.sort == 'price' %}selected{% endif %}>Price: Low to High</option><option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %}>Price: High to Low</option><option value="-views_count" {% if request.GET.sort == '-views_count' %}selected{% endif %}>Most Viewed</option></select></div>
-            <div class="d-grid gap-2"><button type="submit" class="btn btn-primary btn-accent"><i class="fas fa-search me-2"></i>Search</button><a href="{% url 'listings:property_list' %}" class="btn btn-outline-secondary">Clear Filters</a></div>
-          </form>
+    <div class="col-lg-3 mb-4 mb-lg-0">
+      <div class="card position-lg-sticky" style="top:80px;">
+        <div class="card-header bg-primary text-white d-lg-none" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+          <h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filters <i class="fas fa-chevron-down ms-auto"></i></h5>
+        </div>
+        <div id="filterPanel" class="collapse show d-lg-block">
+          <div class="card-header bg-primary text-white d-none d-lg-block"><h5 class="mb-0"><i class="fas fa-filter me-2"></i>Filter Properties</h5></div>
+          <div class="card-body" style="background:var(--gray5);">
+            <form method="get" id="filter-form">
+              <div class="mb-3"><label class="form-label">Search</label><input type="text" name="q" class="form-control" value="{{ filter_form.q.value|default:'' }}" placeholder="Search properties..."></div>
+              <div class="mb-3"><label class="form-label">Property Type</label>{% for value, label in filter_form.property_type.field.choices %}<div class="form-check"><input type="checkbox" class="form-check-input" name="property_type" value="{{ value }}" {% if value in filter_form.property_type.value %}checked{% endif %}><label class="form-check-label">{{ label }}</label></div>{% endfor %}</div>
+              <div class="mb-3"><label class="form-label">Category</label>{% for value, label in filter_form.category.field.choices %}<div class="form-check"><input type="checkbox" class="form-check-input" name="category" value="{{ value }}" {% if value in filter_form.category.value %}checked{% endif %}><label class="form-check-label">{{ label }}</label></div>{% endfor %}</div>
+              <div class="mb-3"><label class="form-label">City</label><input type="text" name="city" class="form-control" value="{{ filter_form.city.value|default:'' }}" placeholder="Enter city..."></div>
+              <div class="mb-3"><label class="form-label">Price Range (DZD)</label><div class="d-flex gap-2"><input type="number" name="min_price" class="form-control" value="{{ filter_form.min_price.value|default:'' }}" placeholder="Min"><input type="number" name="max_price" class="form-control" value="{{ filter_form.max_price.value|default:'' }}" placeholder="Max"></div></div>
+              <div class="mb-3"><label class="form-label">Min Rooms</label><input type="number" name="min_rooms" class="form-control" value="{{ filter_form.min_rooms.value|default:'' }}" placeholder="Number of rooms"></div>
+              <div class="mb-3"><div class="form-check"><input type="checkbox" class="form-check-input" name="furnished" value="true" id="furnished" {% if request.GET.furnished == 'true' %}checked{% endif %}><label class="form-check-label" for="furnished">Furnished</label></div><div class="form-check"><input type="checkbox" class="form-check-input" name="parking" value="true" id="parking" {% if request.GET.parking == 'true' %}checked{% endif %}><label class="form-check-label" for="parking">Parking</label></div></div>
+              <div class="mb-3"><label class="form-label">Sort By</label><select name="sort" class="form-select"><option value="-created_at" {% if request.GET.sort == '-created_at' %}selected{% endif %}>Newest First</option><option value="price" {% if request.GET.sort == 'price' %}selected{% endif %}>Price: Low to High</option><option value="-price" {% if request.GET.sort == '-price' %}selected{% endif %}>Price: High to Low</option><option value="-views_count" {% if request.GET.sort == '-views_count' %}selected{% endif %}>Most Viewed</option></select></div>
+              <div class="d-grid gap-2"><button type="submit" class="btn btn-primary btn-accent"><i class="fas fa-search me-2"></i>Search</button><a href="{% url 'listings:property_list' %}" class="btn btn-outline-secondary">Clear Filters</a></div>
+            </form>
+          </div>
         </div>
       </div>
     </div>
     <div class="col-lg-9">
-      <div class="d-flex justify-content-between align-items-center mb-4"><h4 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;margin:0;">Properties</h4></div>
+      <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2"><h4 style="font-family:'Barlow Condensed',sans-serif;font-weight:800;text-transform:uppercase;margin:0;">Properties</h4></div>
       {% if properties %}
       <div class="row g-4">{% for p in properties %}
-        <div class="col-md-6 col-lg-4"><div class="card property-card" {% if p.owner == user %}style="background-color: rgba(168, 85, 247, 0.1); border: 1px solid #a855f7;"{% endif %}>
+        <div class="col-12 col-sm-6 col-lg-4"><div class="card property-card" {% if p.owner == user %}style="background-color: rgba(168, 85, 247, 0.1); border: 1px solid #a855f7;"{% endif %}>
           <div class="position-relative overflow-hidden">{% if p.primary_image %}<img src="{{ p.primary_image.image.url }}" alt="{{ p.title }}" class="card-img-top">{% else %}<div class="card-img-top bg-light d-flex align-items-center justify-content-center" style="height:200px;"><i class="fas fa-image text-muted" style="font-size:3rem;"></i></div>{% endif %}
           <span class="position-absolute top-0 end-0 p-2"><span class="badge bg-primary">{{ p.get_property_type_display }}</span></span>{% if p.owner == user %}<span class="position-absolute top-0 start-0 p-2"><span class="badge" style="background-color: #a855f7;"><i class="fas fa-check-circle me-1"></i>Yours</span></span>{% endif %}
           <span class="position-absolute bottom-0 start-0 p-2"><small class="text-white bg-dark px-2 py-1 rounded"><i class="fas fa-eye me-1"></i>{{ p.views_count }}</small></span></div>

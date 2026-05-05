@@ -15,13 +15,13 @@
                             {% for image in property.images.all %}
                                 <div class="carousel-item {% if forloop.first %}active{% endif %}">
                                     <img src="{{ image.image.url }}" alt="{{ property.title }}" 
-                                         class="d-block w-100" style="height: 400px; object-fit: cover;">
+                                         class="d-block w-100" style="height: auto; min-height: 400px; object-fit: cover; max-height: 500px;">
                                 </div>
                             {% endfor %}
                         {% else %}
                             <div class="carousel-item active">
                                 <div class="bg-light d-flex align-items-center justify-content-center" 
-                                     style="height: 400px;">
+                                     style="height: 300px; min-height: 300px;">
                                     <i class="fas fa-image text-muted" style="font-size: 5rem;"></i>
                                 </div>
                             </div>
@@ -37,12 +37,12 @@
                         </button>
 
                         <!-- Thumbnails -->
-                        <div class="d-flex gap-2 p-3 bg-light overflow-x-auto">
+                        <div class="d-flex gap-2 p-3 bg-light overflow-x-auto" style="flex-wrap:nowrap;">
                             {% for image in property.images.all %}
                                 <img src="{{ image.image.url }}" alt="Thumbnail" 
                                      class="img-thumbnail cursor-pointer gallery-thumbnail" 
                                      data-bs-slide-to="{{ forloop.counter0 }}"
-                                     style="width: 80px; height: 80px; object-fit: cover; opacity: 0.6; transition: opacity 0.3s;"
+                                     style="width: 80px; height: 80px; min-width:80px; object-fit: cover; opacity: 0.6; transition: opacity 0.3s; flex-shrink:0;"
                                      onmouseover="this.style.opacity='1'"
                                      onmouseout="this.style.opacity='0.6'">
                             {% endfor %}
@@ -88,19 +88,19 @@
                     </div>
 
                     <!-- Price & Type -->
-                    <div class="row mb-4">
-                        <div class="col-md-3">
-                            <h4 class="property-price">{{ property.price|floatformat:0 }} DZD</h4>
+                    <div class="row mb-4 gy-2">
+                        <div class="col-6 col-md-3">
+                            <h4 class="property-price mb-0">{{ property.price|floatformat:0 }} DZD</h4>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-6 col-md-3">
                             <span class="property-type-badge {{ property.property_type }}">
                                 {{ property.get_property_type_display }}
                             </span>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-6 col-md-3">
                             <span class="property-category-badge">{{ property.get_category_display }}</span>
                         </div>
-                        <div class="col-md-3 text-end">
+                        <div class="col-6 col-md-3 text-end">
                             <small class="text-muted">
                                 <i class="fas fa-eye me-1"></i>{{ property.views_count }} views
                             </small>
@@ -109,9 +109,9 @@
 
                     <!-- Key Features -->
                     <h4 class="mb-3">Key Features</h4>
-                    <div class="row mb-4">
+                    <div class="row mb-4 g-3">
                         {% if property.area_sqm %}
-                            <div class="col-md-3">
+                            <div class="col-6 col-md-3">
                                 <div class="stat-card">
                                     <i class="fas fa-expand"></i>
                                     <h6>Area</h6>
@@ -120,7 +120,7 @@
                             </div>
                         {% endif %}
                         {% if property.rooms %}
-                            <div class="col-md-3">
+                            <div class="col-6 col-md-3">
                                 <div class="stat-card">
                                     <i class="fas fa-door-open"></i>
                                     <h6>Rooms</h6>
@@ -129,7 +129,7 @@
                             </div>
                         {% endif %}
                         {% if property.bathrooms %}
-                            <div class="col-md-3">
+                            <div class="col-6 col-md-3">
                                 <div class="stat-card">
                                     <i class="fas fa-bath"></i>
                                     <h6>Bathrooms</h6>
@@ -138,7 +138,7 @@
                             </div>
                         {% endif %}
                         {% if property.floor is not None %}
-                            <div class="col-md-3">
+                            <div class="col-6 col-md-3">
                                 <div class="stat-card">
                                     <i class="fas fa-layer-group"></i>
                                     <h6>Floor</h6>
