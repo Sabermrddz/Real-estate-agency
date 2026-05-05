@@ -147,6 +147,25 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
+# DigitalOcean Spaces (S3-compatible) for media uploads
+SPACES_BUCKET = config('SPACES_BUCKET', default='')
+if SPACES_BUCKET:
+    AWS_ACCESS_KEY_ID = config('SPACES_ACCESS_KEY')
+    AWS_SECRET_ACCESS_KEY = config('SPACES_SECRET_KEY')
+    AWS_STORAGE_BUCKET_NAME = SPACES_BUCKET
+    AWS_S3_REGION_NAME = config('SPACES_REGION', default='ams3')
+    AWS_S3_ENDPOINT_URL = f"https://{AWS_S3_REGION_NAME}.digitaloceanspaces.com"
+    AWS_S3_CUSTOM_DOMAIN = config(
+        'SPACES_CDN_DOMAIN',
+        default=f"{AWS_STORAGE_BUCKET_NAME}.{AWS_S3_REGION_NAME}.digitaloceanspaces.com"
+    )
+    AWS_LOCATION = config('SPACES_MEDIA_PREFIX', default='media')
+    AWS_DEFAULT_ACL = 'public-read'
+    AWS_QUERYSTRING_AUTH = False
+
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/{AWS_LOCATION}/"
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom User Model
