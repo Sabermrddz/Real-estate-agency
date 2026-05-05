@@ -176,25 +176,31 @@ class PropertyImage(models.Model):
     def clean(self):
         """Validate image file."""
         if self.image:
-            # Check file size (max 10MB)
-            file_obj = getattr(self.image, 'file', None)
-            file_size = file_obj.size if file_obj else self.image.size
-            if file_size > 10 * 1024 * 1024:  # 10MB
-                raise ValidationError('Image size must not exceed 10MB.')
-
-            # Check MIME type (skip if python-magic not installed)
             try:
-                import magic
-                mime = magic.Magic(mime=True)
-                stream = file_obj if file_obj else self.image
-                file_mime = mime.from_buffer(stream.read())
-                stream.seek(0)
+                # Check file size (max 10MB)
+                file_obj = getattr(self.image, 'file', None)
+                file_size = file_obj.size if file_obj else self.image.size
+                if file_size > 10 * 1024 * 1024:  # 10MB
+                    raise ValidationError('Image size must not exceed 10MB.')
 
-                allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
-                if file_mime not in allowed_types:
-                    raise ValidationError('Only JPG, PNG, GIF and WebP images are allowed.')
-            except (ImportError, OSError):
-                # python-magic not available or MIME check failed, skip
+                # Check MIME type (skip if python-magic not installed)
+                try:
+                    import magic
+                    mime = magic.Magic(mime=True)
+                    stream = file_obj if file_obj else self.image
+                    file_mime = mime.from_buffer(stream.read())
+                    stream.seek(0)
+
+                    allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+                    if file_mime not in allowed_types:
+                        raise ValidationError('Only JPG, PNG, GIF and WebP images are allowed.')
+                except (ImportError, OSError):
+                    # python-magic not available or MIME check failed, skip
+                    pass
+            except FileNotFoundError:
+                # File doesn't exist in storage (e.g., S3 file was deleted).
+                # Skip validation to allow editing properties even if images are missing.
+                # This prevents blocking form submissions when files are unavailable.
                 pass
 
     def save(self, *args, **kwargs):
