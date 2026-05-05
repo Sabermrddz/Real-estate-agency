@@ -3,7 +3,7 @@
 {% block title %}Home - PropDZ{% endblock %}
 {% block extra_css %}<style>body{padding-top:0!important;}</style>{% endblock %}
 {% block content %}
-<section class="q-hero" id="top">
+<section class="q-hero" id="top" data-hero-imgs="{% static 'others/1.jpg' %},{% static 'others/2.jpg' %},{% static 'others/3.jpg' %}">
   <!-- Slide layers are injected by JS — no static bg div needed -->
   <div class="q-hero-overlay"></div>
   <div class="q-hero-body">
@@ -89,7 +89,7 @@
 {% endif %}
 
 <section style="background:#0A0A0A;padding:80px 0;position:relative;overflow:hidden;">
-  <div style="position:absolute;inset:0;background-image:url('/media/others/2.jpg');background-size:cover;background-position:center;opacity:.22;"></div>
+  <div style="position:absolute;inset:0;background-image:url('{% static 'others/2.jpg' %}');background-size:cover;background-position:center;opacity:.22;"></div>
   <div class="container text-center" style="position:relative;z-index:1;">
     <h2 class="mb-4" style="font-family:'Barlow Condensed',sans-serif;font-weight:900;text-transform:uppercase;font-size:clamp(32px,5vw,58px);letter-spacing:-.01em;color:#fff;">Ready to List Your Property?</h2>
     <p class="lead mb-4" style="color:rgba(255,255,255,.52);max-width:500px;margin:0 auto 28px;">Start selling or renting your property today and reach thousands of potential buyers and renters.</p>

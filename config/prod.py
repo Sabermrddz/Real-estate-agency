@@ -47,9 +47,31 @@ SECURE_BROWSER_XSS_FILTER = True
 SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 
+# Honor proxy headers from DigitalOcean's load balancer
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 # Prevent clickjacking attacks
 # Don't allow your app to be loaded in frames/iframes
 X_FRAME_OPTIONS = 'DENY'
+
+# CSRF trusted origins (match ALLOWED_HOSTS over HTTPS)
+def _build_csrf_trusted_origins(hosts):
+    origins = []
+    for host in hosts:
+        if host.startswith('.'):
+            origins.append(f"https://*{host}")
+        else:
+            origins.append(f"https://{host}")
+    return origins
+
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in config(
+        'CSRF_TRUSTED_ORIGINS',
+        default=','.join(_build_csrf_trusted_origins(ALLOWED_HOSTS))
+    ).split(',')
+    if origin.strip()
+]
 
 # ============================================================================
 # EMAIL CONFIGURATION FOR PRODUCTION

@@ -17,10 +17,14 @@ DEBUG = config('DEBUG', default=False, cast=bool)
 # - localhost & 127.0.0.1 for local development
 # - *.ondigitalocean.app for DigitalOcean preview URLs
 # - propdz.com & www.propdz.com for production
-ALLOWED_HOSTS = config(
-    'ALLOWED_HOSTS',
-    default='localhost,127.0.0.1,*.ondigitalocean.app,propdz.com,www.propdz.com'
-).split(',')
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in config(
+        'ALLOWED_HOSTS',
+        default='localhost,127.0.0.1,.ondigitalocean.app,propdz.com,www.propdz.com'
+    ).split(',')
+    if host.strip()
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -138,6 +142,7 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static'] if (BASE_DIR / 'static').exists() else []
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

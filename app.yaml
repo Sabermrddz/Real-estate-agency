@@ -4,7 +4,7 @@ services:
   github:
     repo: your-username/real_estate_project  # Replace with your GitHub repo
     branch: main
-  build_command: pip install -r requirements.txt && python manage.py migrate --noinput && python manage.py collectstatic --noinput
+  build_command: pip install -r requirements.txt && python manage.py collectstatic --noinput
   run_command: gunicorn config.wsgi:application --bind 0.0.0.0:$PORT --workers 2
   envs:
   - key: DJANGO_SETTINGS_MODULE
@@ -14,9 +14,9 @@ services:
   - key: DEBUG
     value: "False"
   - key: ALLOWED_HOSTS
-    value: ${APP_DOMAIN}
+    value: ${APP_DOMAIN},.ondigitalocean.app
   - key: DATABASE_URL
-    value: ${db.connection_string}
+    value: ${db.DATABASE_URL}
   - key: EMAIL_HOST_USER
     value: ${EMAIL_HOST_USER}
   - key: EMAIL_HOST_PASSWORD
@@ -25,7 +25,7 @@ services:
     value: ${DEFAULT_FROM_EMAIL}
   http_port: 8080
   source_dir: ./
-specs:
+databases:
 - name: db
   engine: PG
   production: true
